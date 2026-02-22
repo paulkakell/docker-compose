@@ -3,7 +3,7 @@ services:
     image: filebrowser/filebrowser:latest
     container_name=: ${CONTAINER_NAME}
     networks:
-      - npm_containers
+      - ${INTERNAL_NETWORK}
     ports:
       - ${WEBPORT}:80
     environment:
@@ -25,3 +25,7 @@ services:
       - ${VOLUMEROOT}/${CONTAINER_NAME}/database:/database:rw
       - ${VOLUMEROOT}/${CONTAINER_NAME}/config:/config:rw
     restart: unless-stopped
+networks:
+  net_internal:
+    external: true
+    name: ${INTERNAL_NETWORK}
