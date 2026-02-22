@@ -35,9 +35,9 @@ services:
       - ${VOLUME_ROOT}/${CONTAINER_NAME}/letsencrypt:/etc/letsencrypt
 
 networks:
-  ${EXTERNAL_NETWORK}:
+  net_external:
+    external: true
     name: ${EXTERNAL_NETWORK}
+  net_internal:
     external: true
-  ${INTERNAL_NETWORK}:
     name: ${INTERNAL_NETWORK}
-    external: true
