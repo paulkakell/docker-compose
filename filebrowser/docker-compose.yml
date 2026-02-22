@@ -1,35 +1,27 @@
-networks:
-  npm_containers:
-    external: true
 services:
   filebrowser:
     image: filebrowser/filebrowser:latest
-    container_name: filebrowser
+    container_name=: ${CONTAINER_NAME}
     networks:
       - npm_containers
-    dns:
-      - ${DNS1}
-      - ${DNS2}
-      - ${DNS3}
-      - ${DNS4}
     ports:
       - ${WEBPORT}:80
     environment:
       - TZ=${TZ}
     user: "${UUID}:${GUID}"
     labels:
-      - homepage.group=${HOMEPAGEGROUP}
-      - homepage.name=${HOMEPAGENAME}
-      - homepage.icon=${HOMEPAGEICON}
-      - homepage.href=${HOMEPAGEHREF}
-      - homepage.description=${HOMEPAGEDESCRIPTION}
+      - homepage.group=${HOMEPAGE_SERVICE_GROUP}
+      - homepage.name=${HOMEPAGE_SERVICE_NAME}
+      - homepage.icon=filebrowser
+      - homepage.href=${HOMEPAGE_URL}
+      - homepage.description=${HOMEPAGE_DESCRIPTION}
       - homepage.widget.type=filebrowser
-      - homepage.widget.url=${HOMEPAGEWIDGETURL}
-      - homepage.widget.username=${HOMEPAGEWIDGETUSERNAME}
-      - homepage.widget.password=${HOMEPAGEWIDGETPASSWORD}
+      - homepage.widget.url=${HOMEPAGE_URL}
+      - homepage.widget.username=${HOMEPAGE_USERNAME}
+      - homepage.widget.password=${HOMEPAGE_PASSWORD}
       - homepage.docker=true
     volumes:
       - ${VOLUMEROOT}:/srv:rw
-      - ${VOLUMEROOT}/filebrowser/database:/database:rw
-      - ${VOLUMEROOT}filebrowser/config:/config:rw
+      - ${VOLUMEROOT}/${CONTAINER_NAME}/database:/database:rw
+      - ${VOLUMEROOT}/${CONTAINER_NAME}/config:/config:rw
     restart: unless-stopped
