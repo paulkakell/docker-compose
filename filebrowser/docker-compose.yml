@@ -1,7 +1,7 @@
 services:
   filebrowser:
     image: filebrowser/filebrowser:latest
-    container_name=: ${CONTAINER_NAME}
+    container_name: ${CONTAINER_NAME}
     networks:
       - ${INTERNAL_NETWORK}
     ports:
