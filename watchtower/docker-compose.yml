@@ -14,7 +14,7 @@ services:
       - homepage.description=Watchtower Image Management
       - homepage.widget.type=watchtower
       - homepage.widget.url=${WATCHTOWER_URL}
-      - homepage.widget.key=${WATCHTOWE_API_TOKEN}
+      - homepage.widget.key=${WATCHTOWER_HTTP_API_TOKEN}
     ports:
       - "8080:8080"                               # External facing web port
     restart: unless-stopped
