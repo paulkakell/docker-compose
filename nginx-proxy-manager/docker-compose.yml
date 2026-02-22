@@ -1,0 +1,44 @@
+services:
+  ${CONTAINER_NAME}:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: ${CONTAINER_NAME}
+    environment:
+      TZ: ${TZ}
+    labels:
+      - homepage.group=${HOMEPAGE_SERVICE_GROUP}
+      - homepage.name=${HOMEPAGE_SERVICE_NAME}
+      - homepage.icon=homepage
+      - homepage.href=${HOMEPAGE_URL}
+      - homepage.description=${HOMEPAGE_DESCRIPTION}
+      - homepage.widget.type=npm
+      - homepage.widget.username=${NPM_USERNAME}
+      - homepage.widget.password=${NPM_PASSWORD}
+    networks:
+      - ${EXTERNAL_NETWORK}
+      - ${INTERNAL_NETWORK}
+    ports:
+      - '80:80' # Public HTTP Port
+      - '443:443' # Public HTTPS Port
+      - '${ADMIN_WEB_PORT}:81' # Admin Web Port
+      # Add any other Stream port you want to expose
+      # - '21:21' # FTP
+
+      # Uncomment this if you want to change the location of
+      # the SQLite DB file within the container
+      # DB_SQLITE_FILE: "/data/database.sqlite"
+
+      # Uncomment this if IPv6 is not enabled on your host
+      # DISABLE_IPV6: 'true'
+    restart: unless-stopped
+    volumes:
+      - ${VOLUME_ROOT}/${CONTAINER_NAME}/data:/data
+      - ${VOLUME_ROOT}/${CONTAINER_NAME}/letsencrypt:/etc/letsencrypt
+
+networks:
+  ${EXTERNAL_NETWORK}:
+    external: true
+    name: ${EXTERNAL_NETWORK}
+  ${INTERNAL_NETWORK}:
+    name: ${INTERNAL_NETWORK}
+    internal: true
+    driver: bridge
