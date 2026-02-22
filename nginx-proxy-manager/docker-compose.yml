@@ -36,8 +36,9 @@ services:
 
 networks:
   ${EXTERNAL_NETWORK}:
-    external: true
     name: ${EXTERNAL_NETWORK}
+    internal: true
+    driver: bridge
   ${INTERNAL_NETWORK}:
     name: ${INTERNAL_NETWORK}
     internal: true
