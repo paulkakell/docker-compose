@@ -11,8 +11,8 @@ services:
       - homepage.href=${HOMEPAGE_URL}
       - homepage.description=${HOMEPAGE_DESCRIPTION}
       - homepage.widget.type=npm
-      - homepage.widget.username=${NPM_USERNAME}
-      - homepage.widget.password=${NPM_PASSWORD}
+      - homepage.widget.username=${HOMEPAGE_USERNAME}
+      - homepage.widget.password=${HOMEPAGE_PASSWORD}
     networks:
       - ${EXTERNAL_NETWORK}
       - ${INTERNAL_NETWORK}
