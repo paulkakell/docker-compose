@@ -10,6 +10,8 @@ services:
       - homepage.icon=homepage
       - homepage.href=${HOMEPAGE_URL}
       - homepage.description=${HOMEPAGE_DESCRIPTION}
+      - homepage.server=${DOCKERSERVER}
+      - homepage.container=${CONTAINER_NAME}
       - homepage.widget.type=npm
       - homepage.widget.username=${HOMEPAGE_USERNAME}
       - homepage.widget.password=${HOMEPAGE_PASSWORD}
