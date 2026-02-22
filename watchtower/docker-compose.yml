@@ -1,0 +1,13 @@
+services:
+  watchtower:
+    image: nickfedor/watchtower
+    container_name: watchtower
+    environment:
+      - TZ=${TZ}                                                   # Time zone (i.e. America/Denver)
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_HTTP_API_METRICS=true
+      - WATCHTOWER_HTTP_API_TOKEN=${WATCHTOWER_HTTP_API_TOKEN}     # API token for reporting to Homepage (i.e. 9f3c2e7a4b8d1c6f5a2e9b7d4c1f8a6e3d7b2c9f1a4e6d8c3b7f2a9d5e1c4b8)
+    ports:
+      - "${CONTAINER_WEB_PORT}:8080"                               # External facing web port
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
