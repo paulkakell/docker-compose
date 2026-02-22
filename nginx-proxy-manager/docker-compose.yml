@@ -1,5 +1,5 @@
 services:
-  ${CONTAINER_NAME}:
+  nginx-proxy-manager:
     image: 'jc21/nginx-proxy-manager:latest'
     container_name: ${CONTAINER_NAME}
     environment:
