@@ -1,5 +1,13 @@
 param(
-    [string]$EnvFile = ".env"
+    [string]$EnvFile = "EnvironmentSettings.txt"
+)
+
+$requiredKeys = @(
+    "TA_CACHE_PATH",
+    "TA_MEDIA_PATH",
+    "REDIS_DATA_PATH",
+    "ES_DATA_PATH",
+    "ES_SNAPSHOT_PATH"
 )
 
 Write-Host "Reading environment file: $EnvFile"
@@ -9,33 +17,44 @@ if (!(Test-Path $EnvFile)) {
     exit 1
 }
 
-# Read .env and extract key=value pairs
-$envVars = Get-Content $EnvFile | Where-Object {
-    $_ -match "=" -and -not $_.StartsWith("#")
+# Parse .env file into dictionary
+$envMap = @{}
+
+Get-Content $EnvFile | ForEach-Object {
+    if ($_ -match "=" -and -not $_.StartsWith("#")) {
+        $parts = $_ -split "=", 2
+        if ($parts.Count -eq 2) {
+            $key = $parts[0].Trim()
+            $value = $parts[1].Trim()
+            $envMap[$key] = $value
+        }
+    }
 }
 
 $paths = @()
 
-foreach ($line in $envVars) {
-    $parts = $line -split "=", 2
-    if ($parts.Count -ne 2) { continue }
+foreach ($key in $requiredKeys) {
+    if ($envMap.ContainsKey($key)) {
+        $value = $envMap[$key]
 
-    $value = $parts[1].Trim()
-
-    # Detect Windows-style absolute paths
-    if ($value -match "^[A-Za-z]:\\") {
-        $paths += $value
+        if ($value -match "^[A-Za-z]:\\") {
+            $paths += $value
+        } else {
+            Write-Warning "$key is not a valid Windows path: $value"
+        }
+    } else {
+        Write-Warning "$key not found in env file"
     }
 }
 
 if ($paths.Count -eq 0) {
-    Write-Host "No Windows paths found in .env"
-    exit 0
+    Write-Error "No valid paths found."
+    exit 1
 }
 
 $paths = $paths | Sort-Object -Unique
 
-Write-Host "Discovered paths:"
+Write-Host "`nPaths to prepare:"
 $paths | ForEach-Object { Write-Host " - $_" }
 
 foreach ($path in $paths) {
@@ -43,7 +62,7 @@ foreach ($path in $paths) {
     Write-Host "`nProcessing: $path"
 
     try {
-        # Create directory if it does not exist
+        # Create directory if missing
         if (!(Test-Path $path)) {
             Write-Host "Creating directory..."
             New-Item -ItemType Directory -Path $path -Force | Out-Null
@@ -51,17 +70,17 @@ foreach ($path in $paths) {
             Write-Host "Directory already exists."
         }
 
-        # Remove read-only attribute
+        # Remove read-only attributes
         Write-Host "Clearing read-only flags..."
-        attrib -r $path /s /d 2>$null
+        attrib -r "$path\*" /s /d 2>$null
 
-        # Grant permissions (Users + Everyone full control)
+        # Enable inheritance
+        icacls $path /inheritance:e | Out-Null
+
+        # Grant Docker-friendly permissions
         Write-Host "Setting permissions..."
         icacls $path /grant "Users:(OI)(CI)F" /T /C | Out-Null
         icacls $path /grant "Everyone:(OI)(CI)F" /T /C | Out-Null
-
-        # Ensure inheritance is enabled
-        icacls $path /inheritance:e | Out-Null
 
         Write-Host "Completed: $path"
 
@@ -70,4 +89,4 @@ foreach ($path in $paths) {
     }
 }
 
-Write-Host "`nDone."
+Write-Host "`nAll paths processed."
