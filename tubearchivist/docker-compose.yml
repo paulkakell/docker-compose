@@ -1,0 +1,129 @@
+services:
+  tubearchivist:
+    image: bbilly1/tubearchivist:${TA_IMAGE_TAG}
+    container_name: ${TA_CONTAINER_NAME}
+    restart: unless-stopped
+    depends_on:
+      archivist-redis:
+        condition: service_healthy
+      archivist-es:
+        condition: service_healthy
+    ports:
+      - "${TA_BIND_IP}:${TA_PORT}:${TA_PORT}"
+    environment:
+      TA_HOST: ${TA_HOST}
+      TA_USERNAME: ${TA_USERNAME}
+      TA_PASSWORD: ${TA_PASSWORD}
+      TZ: ${TZ}
+      HOST_UID: ${HOST_UID}
+      HOST_GID: ${HOST_GID}
+      TA_PORT: ${TA_PORT}
+      TA_BACKEND_PORT: ${TA_BACKEND_PORT}
+      REDIS_CON: ${REDIS_CON}
+      ES_URL: ${ES_URL}
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
+      ELASTIC_USER: ${ELASTIC_USER}
+      TA_ENABLE_AUTH_PROXY: ${TA_ENABLE_AUTH_PROXY}
+      TA_LDAP: ${TA_LDAP}
+      TA_AUTO_UPDATE_YTDLP: ${TA_AUTO_UPDATE_YTDLP}
+      DISABLE_STATIC_AUTH: ${DISABLE_STATIC_AUTH}
+      DJANGO_DEBUG: ${DJANGO_DEBUG}
+      ES_DISABLE_VERIFY_SSL: ${ES_DISABLE_VERIFY_SSL}
+      ES_SNAPSHOT_DIR: ${ES_SNAPSHOT_DIR}
+    volumes:
+      - ${TA_CACHE_PATH}:/cache
+      - ${TA_MEDIA_PATH}:/youtube
+    networks:
+      ta_internal:
+      ta_external:
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:${TA_PORT}/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    labels:
+      - homepage.group=${HOMEPAGE_GROUP}
+      - homepage.name=${HOMEPAGE_NAME_TA}
+      - homepage.icon=${HOMEPAGE_ICON_TA}
+      - homepage.description=${HOMEPAGE_DESCRIPTION_TA}
+      - homepage.href=${HOMEPAGE_HREF_TA}
+      - homepage.siteMonitor=${HOMEPAGE_SITEMONITOR_TA}
+      - homepage.server=${HOMEPAGE_SERVER}
+      - homepage.container=${TA_CONTAINER_NAME}
+      - homepage.widget.type=tubearchivist
+      - homepage.widget.url=${HOMEPAGE_WIDGET_URL_TA}
+      - homepage.widget.key=${HOMEPAGE_WIDGET_KEY_TA}
+      - homepage.widget.fields=${HOMEPAGE_WIDGET_FIELDS_TA}
+
+  archivist-redis:
+    image: redis:${REDIS_IMAGE_TAG}
+    container_name: ${REDIS_CONTAINER_NAME}
+    restart: unless-stopped
+    command: >
+      redis-server
+      --appendonly yes
+      --save 60 1
+      --loglevel warning
+    expose:
+      - "${REDIS_PORT}"
+    volumes:
+      - ${REDIS_DATA_PATH}:/data
+    networks:
+      ta_internal:
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    labels:
+      - homepage.group=${HOMEPAGE_GROUP}
+      - homepage.name=${HOMEPAGE_NAME_REDIS}
+      - homepage.icon=${HOMEPAGE_ICON_REDIS}
+      - homepage.description=${HOMEPAGE_DESCRIPTION_REDIS}
+      - homepage.siteMonitor=${HOMEPAGE_SITEMONITOR_REDIS}
+      - homepage.server=${HOMEPAGE_SERVER}
+      - homepage.container=${REDIS_CONTAINER_NAME}
+
+  archivist-es:
+    image: bbilly1/tubearchivist-es:${ES_IMAGE_TAG}
+    container_name: ${ES_CONTAINER_NAME}
+    restart: unless-stopped
+    environment:
+      ES_JAVA_OPTS: ${ES_JAVA_OPTS}
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
+      xpack.security.enabled: ${ES_XPACK_SECURITY_ENABLED}
+      discovery.type: ${ES_DISCOVERY_TYPE}
+      path.repo: ${ES_SNAPSHOT_DIR}
+    expose:
+      - "${ES_PORT}"
+    volumes:
+      - ${ES_DATA_PATH}:/usr/share/elasticsearch/data
+      - ${ES_SNAPSHOT_PATH}:/usr/share/elasticsearch/data/snapshot
+    networks:
+      ta_internal:
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -u ${ELASTIC_USER}:${ELASTIC_PASSWORD} http://127.0.0.1:${ES_PORT}/_cluster/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    labels:
+      - homepage.group=${HOMEPAGE_GROUP}
+      - homepage.name=${HOMEPAGE_NAME_ES}
+      - homepage.icon=${HOMEPAGE_ICON_ES}
+      - homepage.description=${HOMEPAGE_DESCRIPTION_ES}
+      - homepage.siteMonitor=${HOMEPAGE_SITEMONITOR_ES}
+      - homepage.server=${HOMEPAGE_SERVER}
+      - homepage.container=${ES_CONTAINER_NAME}
+
+networks:
+  ta_internal:
+    name: ${INTERNAL_NETWORK_NAME}
+    driver: bridge
+    internal: true
+
+  ta_external:
+    name: ${EXTERNAL_NETWORK_NAME}
+    external: true
