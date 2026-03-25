@@ -1,15 +1,13 @@
 services:
   tubearchivist:
     image: bbilly1/tubearchivist:${TA_IMAGE_TAG}
-    container_name: ${TA_CONTAINER_NAME}
+    container_name: tubearchivist
     restart: unless-stopped
     depends_on:
-      archivist-redis:
-        condition: service_healthy
-      archivist-es:
-        condition: service_healthy
+      - archivist-redis
+      - archivist-es
     ports:
-      - "${TA_BIND_IP}:${TA_PORT}:${TA_PORT}"
+      - "${TA_BIND_IP}:${TA_PORT}:8000"
     environment:
       TA_HOST: ${TA_HOST}
       TA_USERNAME: ${TA_USERNAME}
@@ -50,7 +48,7 @@ services:
       - homepage.href=${HOMEPAGE_HREF_TA}
       - homepage.siteMonitor=${HOMEPAGE_SITEMONITOR_TA}
       - homepage.server=${HOMEPAGE_SERVER}
-      - homepage.container=${TA_CONTAINER_NAME}
+      - homepage.container=TubeArchivist
       - homepage.widget.type=tubearchivist
       - homepage.widget.url=${HOMEPAGE_WIDGET_URL_TA}
       - homepage.widget.key=${HOMEPAGE_WIDGET_KEY_TA}
@@ -58,7 +56,7 @@ services:
 
   archivist-redis:
     image: redis:${REDIS_IMAGE_TAG}
-    container_name: ${REDIS_CONTAINER_NAME}
+    container_name: archivist-redis
     restart: unless-stopped
     command: >
       redis-server
@@ -84,11 +82,11 @@ services:
       - homepage.description=${HOMEPAGE_DESCRIPTION_REDIS}
       - homepage.siteMonitor=${HOMEPAGE_SITEMONITOR_REDIS}
       - homepage.server=${HOMEPAGE_SERVER}
-      - homepage.container=${REDIS_CONTAINER_NAME}
+      - homepage.container=Archivist-Redis
 
   archivist-es:
     image: bbilly1/tubearchivist-es:${ES_IMAGE_TAG}
-    container_name: ${ES_CONTAINER_NAME}
+    container_name: archivist-es
     restart: unless-stopped
     environment:
       ES_JAVA_OPTS: ${ES_JAVA_OPTS}
@@ -103,12 +101,7 @@ services:
       - ${ES_SNAPSHOT_PATH}:/usr/share/elasticsearch/data/snapshot
     networks:
       ta_internal:
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS -u ${ELASTIC_USER}:${ELASTIC_PASSWORD} http://127.0.0.1:${ES_PORT}/_cluster/health >/dev/null || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 10
-      start_period: 60s
+
     labels:
       - homepage.group=${HOMEPAGE_GROUP}
       - homepage.name=${HOMEPAGE_NAME_ES}
@@ -116,7 +109,7 @@ services:
       - homepage.description=${HOMEPAGE_DESCRIPTION_ES}
       - homepage.siteMonitor=${HOMEPAGE_SITEMONITOR_ES}
       - homepage.server=${HOMEPAGE_SERVER}
-      - homepage.container=${ES_CONTAINER_NAME}
+      - homepage.container=Archivist-ES
 
 networks:
   ta_internal:
