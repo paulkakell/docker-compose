@@ -4,10 +4,20 @@ services:
     container_name: ${CONTAINER_NAME}
     environment:
       TZ: ${TZ}
+
+      # MariaDB connection
+      DB_MYSQL_HOST: nginx-proxy-manager-db
+      DB_MYSQL_PORT: 3306
+      DB_MYSQL_USER: ${DB_MYSQL_USER}
+      DB_MYSQL_PASSWORD: ${DB_MYSQL_PASSWORD}
+      DB_MYSQL_NAME: ${DB_MYSQL_NAME}
+
+      # Uncomment this if IPv6 is not enabled on your host
+      # DISABLE_IPV6: 'true'
     labels:
       - homepage.group=${HOMEPAGE_SERVICE_GROUP}
       - homepage.name=${HOMEPAGE_SERVICE_NAME}
-      - homepage.icon=homepage
+      - homepage.icon=nginx-proxy-manager
       - homepage.href=${HOMEPAGE_URL}
       - homepage.description=${HOMEPAGE_DESCRIPTION}
       - homepage.server=${DOCKERSERVER}
@@ -16,30 +26,53 @@ services:
       - homepage.widget.username=${HOMEPAGE_USERNAME}
       - homepage.widget.password=${HOMEPAGE_PASSWORD}
     networks:
-      - ${EXTERNAL_NETWORK}
-      - ${INTERNAL_NETWORK}
+      - net_external
+      - net_internal
     ports:
       - '80:80' # Public HTTP Port
       - '443:443' # Public HTTPS Port
       - '${ADMIN_WEB_PORT}:81' # Admin Web Port
       # Add any other Stream port you want to expose
       # - '21:21' # FTP
-
-      # Uncomment this if you want to change the location of
-      # the SQLite DB file within the container
-      # DB_SQLITE_FILE: "/data/database.sqlite"
-
-      # Uncomment this if IPv6 is not enabled on your host
-      # DISABLE_IPV6: 'true'
     restart: unless-stopped
     volumes:
       - ${VOLUME_ROOT}/${CONTAINER_NAME}/data:/data
       - ${VOLUME_ROOT}/${CONTAINER_NAME}/letsencrypt:/etc/letsencrypt
+    depends_on:
+      nginx-proxy-manager-db:
+        condition: service_healthy
+
+  nginx-proxy-manager-db:
+    image: 'mariadb:10.11'
+    container_name: ${CONTAINER_NAME}-db
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_MYSQL_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_MYSQL_NAME}
+      MARIADB_USER: ${DB_MYSQL_USER}
+      MARIADB_PASSWORD: ${DB_MYSQL_PASSWORD}
+      TZ: ${TZ}
+    networks:
+      - net_internal
+    restart: unless-stopped
+    volumes:
+      - ${VOLUME_ROOT}/${CONTAINER_NAME}/mariadb:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "healthcheck.sh",
+          "--connect",
+          "--innodb_initialized"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 networks:
   net_external:
     external: true
     name: ${EXTERNAL_NETWORK}
+
   net_internal:
     external: true
     name: ${INTERNAL_NETWORK}
